@@ -17,7 +17,7 @@ TOOL_SCHEMA = {
     }
 }
 
-def definition(command: str, timeout: 60):
+def definition(command: str, timeout: int = 60):
     try:
         result = subprocess.run(
             args=command,
@@ -26,7 +26,6 @@ def definition(command: str, timeout: 60):
             text=True,
             timeout=timeout
         )
-        print(result)
         return json.dumps({
             "success": True,
             "stdout": result.stdout
