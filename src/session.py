@@ -30,8 +30,8 @@ class Session:
                 model=self.model,
                 messages=self.messages,
                 tools=self.tools,
-                max_completion_tokens=5000,
-                reasoning_effort="high",
+                max_completion_tokens=65536,
+                reasoning_effort="max",
                 extra_body={"thinking": {"type": "enabled"}},
                 stream = True
             )
@@ -67,11 +67,10 @@ class Session:
             # 处理工具调用
             if tool_calls == []:
                 break
-            print(tool_calls)
             for tool in tool_calls:
                 tool_function = self.tool_map[tool['function']['name']]
                 tool_result = tool_function(**json.loads(tool['function']['arguments']))
-                print(f"tool result for {tool['function']['name']}: {tool_result}\n")
+                print(f"৹ 调用工具：{tool['function']['name']}")
                 self.messages.append({
                     "role": "tool",
                     "tool_call_id": tool['id'],

@@ -12,7 +12,7 @@ TOOL_SCHEMA = {
                 "command": {"type": "string"},
                 "timeout": {"type": "integer", "description": "最大等待时间，单位为秒，默认为60"},
             },
-            "required": ["path", "old_string", "new_string"]
+            "required": ["command"]
         }
     }
 }
