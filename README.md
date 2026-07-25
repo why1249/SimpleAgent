@@ -10,16 +10,17 @@
 
 ## 快速开始
 
-Simple Agent使用.env管理环境变量，并使用uv管理依赖
+Simple Agent使用.env管理环境变量，并使用uv管理依赖。当前仅支持deepseek
 
 ```bash
 # 克隆仓库
 git clone https://github.com/why1249/SimpleAgent.git
 cd SimpleAgent
-# 创建.env写入以下环境变量，参考.env.example，此处以deepseek为例
+# 创建.env写入以下环境变量，参考.env.example
 OPENAI_API_KEY=sk-xxxxxxx
 OPENAI_BASE_URL=https://api.deepseek.com/v1
 MODEL=deepseek-v4-flash
+REASONING_EFFORT=high
 # 使用uv同步依赖并运行项目
 uv sync
 uv run main.py

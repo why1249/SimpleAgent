@@ -17,6 +17,7 @@ class Session:
             max_retries=5
         )
         self.model = os.getenv("MODEL")
+        self.reasoning_effort = os.getenv("REASONING_EFFORT")
         self.tools = tools
         self.tool_map = tool_map
 
@@ -31,7 +32,7 @@ class Session:
                 messages=self.messages,
                 tools=self.tools,
                 max_completion_tokens=65536,
-                reasoning_effort="max",
+                reasoning_effort=self.reasoning_effort,
                 extra_body={"thinking": {"type": "enabled"}},
                 stream = True
             )
@@ -44,12 +45,12 @@ class Session:
             for chunk in response:
                 delta = chunk.choices[0].delta
                 if delta.content is not None:
-                    print(delta.content, end="")
+                    print(delta.content, end="", flush=True)
                     content += delta.content
                 else:
-                    # 先尝试输出思维链，输出失败说明是工具信息进入工具处理
+                    # 先尝试输出思维链，输出失败说明是工具信息，进入工具处理流程
                     try:
-                        print(delta.reasoning_content, end="")
+                        print(delta.reasoning_content, end="", flush=True)
                         reasoning_content += delta.reasoning_content
                     except:
                         self.collect_tool_calls(tool_calls, delta)
