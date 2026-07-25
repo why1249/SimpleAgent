@@ -37,5 +37,3 @@ def definition(command: str, timeout: 60):
             "stdout": result.stdout,
             "stderr": result.stderr
         })
-
-definition('ls')
