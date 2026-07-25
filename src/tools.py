@@ -1,4 +1,4 @@
-from src.tool_definitions import read_file, edit, bash, write_file
+from src.tool_definitions import read_file, edit, shell, write_file
 
 tools = [
     read_file.TOOL_SCHEMA,
@@ -9,5 +9,5 @@ TOOL_MAP = {
     "write_file": write_file.definition,
     "read_file": read_file.definition,
     "edit": edit.definition,
-    "bash": bash.definition,
+    "bash": shell.definition,
 }

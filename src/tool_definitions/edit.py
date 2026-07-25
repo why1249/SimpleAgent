@@ -9,9 +9,7 @@ TOOL_SCHEMA = {
         "parameters": {
             "type": "object",
             "properties": {
-                "path": {
-                    "type": "string",
-                },
+                "path": {"type": "string"},
                 "old_string": {"type": "string"},
                 "new_string": {"type": "string"}
             },

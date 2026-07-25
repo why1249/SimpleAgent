@@ -8,9 +8,7 @@ TOOL_SCHEMA = {
         "parameters": {
             "type": "object",
             "properties": {
-                "path": {
-                    "type": "string"
-                },
+                "path": {"type": "string"},
             },
             "required": ["path"]
         }
@@ -18,7 +16,6 @@ TOOL_SCHEMA = {
 }
 
 def definition(path: str):
-    # content = None
     try:
         with open(path, 'r', encoding='utf-8') as f:
             content = f.read()

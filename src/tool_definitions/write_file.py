@@ -8,9 +8,7 @@ TOOL_SCHEMA = {
         "parameters": {
             "type": "object",
             "properties": {
-                "path": {
-                    "type": "string"
-                },
+                "path": {"type": "string"},
                 "content": {"type": "string"}
             },
             "required": ["path", "content"]

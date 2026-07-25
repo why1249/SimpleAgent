@@ -10,7 +10,7 @@ class Session:
                 "role": "system", 
                 "content": self.get_system_prompt("./prompt/system_prompt.md")
             },
-        ]
+        ] 
         self.client = OpenAI(
             api_key=os.getenv("OPENAI_API_KEY"),
             base_url=os.getenv("OPENAI_BASE_URL"),
@@ -21,7 +21,7 @@ class Session:
         self.tool_map = tool_map
 
     def run(self, new_prompt: str):
-        
+        '''单轮响应'''
         self.messages.append({"role": "user", "content": new_prompt})
             
         while True:
@@ -79,12 +79,14 @@ class Session:
                 })
 
     def start(self):
+        '''开启会话'''
         while True:
             new_prompt = input("User: ")
             self.run(new_prompt)
 
     @staticmethod
     def get_system_prompt(path: str):
+        '''获取系统提示词'''
         with open(path, 'r', encoding='utf-8') as f:
             system_propmt = f.read()
         current_state = f"当前工作区：{os.getcwd()}；当前时间：{date.today()} \n"
@@ -93,6 +95,7 @@ class Session:
 
     @staticmethod
     def collect_tool_calls(tool_calls: list, delta):
+        '''收集流式工具调用信息'''
         for tc in delta.tool_calls:
             # tc.index表明这是第tc.index个调用
             if len(tool_calls) <= tc.index:
