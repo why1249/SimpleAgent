@@ -24,7 +24,8 @@ def definition(command: str, timeout: int = 60):
             capture_output=True,
             shell=True,
             text=True,
-            timeout=timeout
+            timeout=timeout,
+            encoding= 'utf-8'
         )
         return json.dumps({
             "success": True,

@@ -1,4 +1,4 @@
-from src.tool_definitions import read_file, edit, shell, write_file
+from simple_agent.tool_definitions import read_file, edit, shell, write_file
 
 tools = [
     read_file.TOOL_SCHEMA,

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from openai import OpenAI
 import json
 from datetime import date
@@ -8,7 +9,7 @@ class Session:
         self.messages = [
             {
                 "role": "system", 
-                "content": self.get_system_prompt("./prompt/system_prompt.md")
+                "content": self.get_system_prompt(str(Path(__file__).parent / "prompt" / "system_prompt.md"))
             },
         ] 
         self.client = OpenAI(

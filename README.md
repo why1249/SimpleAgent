@@ -12,6 +12,8 @@
 
 Simple Agent使用.env管理环境变量，并使用uv管理依赖。当前仅支持deepseek
 
+
+
 ```bash
 # 克隆仓库
 git clone https://github.com/why1249/SimpleAgent.git
