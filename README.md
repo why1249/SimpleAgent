@@ -6,24 +6,14 @@
 
 ## 最新
 
-**[2026/7/25]-v0** 包含`write_file、read_file、edit、shell`四个工具的基础实现，跑通多轮对话与工具调用。
-
+**[2026/7/25]-v0.1.0** 包含`write_file、read_file、edit、shell`四个工具的基础实现，跑通多轮对话与工具调用。
+**[2026/8/07]-v0.1.1** 支持uv直接安装，首次启动时交互式配置（替代手写.env）
 ## 快速开始
 
-Simple Agent使用.env管理环境变量，并使用uv管理依赖。当前仅支持deepseek
-
-
+Simple Agent使用.env管理环境变量，并使用uv管理依赖。**当前仅支持deepseek的openai chat completions接口**
 
 ```bash
-# 克隆仓库
-git clone https://github.com/why1249/SimpleAgent.git
-cd SimpleAgent
-# 创建.env写入以下环境变量，参考.env.example
-OPENAI_API_KEY=sk-xxxxxxx
-OPENAI_BASE_URL=https://api.deepseek.com/v1
-MODEL=deepseek-v4-flash
-REASONING_EFFORT=high
-# 使用uv同步依赖并运行项目
-uv sync
-uv run main.py
+# 使用uv从仓库安装
+uv tool install git+https://github.com/why1249/SimpleAgent.git
 ```
+首次启动时会弹出API KEY等配置信息的填写。
