@@ -20,7 +20,7 @@ def initialize(dotenv_path):
 def main():
     home = os.path.expanduser("~")
     dotenv_path = os.path.join(home, '.simple-agent/.env')
-    print(dotenv_path)
+    print(f"\033[36mloaded from dotenv_path\033[0m")
     if load_dotenv(dotenv_path) == False:
         initialize(dotenv_path)
         load_dotenv(dotenv_path)
