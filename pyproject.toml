@@ -11,6 +11,7 @@ requires-python = ">=3.12"
 dependencies = [
     "openai>=2.46.0",
     "python-dotenv>=1.2.2",
+    "textual>=8.2.8",
 ]
 [project.scripts]
 simple-agent = "simple_agent.start:main"

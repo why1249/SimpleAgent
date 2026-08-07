@@ -3,9 +3,10 @@ from pathlib import Path
 from openai import OpenAI
 import json
 from datetime import date
-
+import time
 class Session:
     def __init__(self, tools: list, tool_map: map):
+        # 从源文件目录读取prompt
         self.messages = [
             {
                 "role": "system", 
@@ -22,10 +23,10 @@ class Session:
         self.tools = tools
         self.tool_map = tool_map
 
-    def run(self, new_prompt: str):
-        '''单轮响应'''
+    def run(self, new_prompt: str, on_content=None, on_reasoning=None, on_tool=None):
+        '''单轮响应，流式 chunk 经回调上抛，便于 UI 实时渲染'''
         self.messages.append({"role": "user", "content": new_prompt})
-            
+
         while True:
             # 响应与持久化上下文
             response = self.client.chat.completions.create(
@@ -35,36 +36,78 @@ class Session:
                 max_completion_tokens=65536,
                 reasoning_effort=self.reasoning_effort,
                 extra_body={"thinking": {"type": "enabled"}},
-                stream = True
+                stream=True
             )
 
             # 流式，需要手动收集信息，最后再持久化
             tool_calls = []
             content = ""
             reasoning_content = ""
-
+            content_count = 0
+            reasoning_content_count = 0
+            new_content = ""
+            new_reasoning_content = ""
+            max_new_tokens = 3
+            count = 0.0
+            start = time.perf_counter()
             for chunk in response:
                 delta = chunk.choices[0].delta
+                count += 1.0
                 if delta.content is not None:
-                    print(delta.content, end="", flush=True)
-                    content += delta.content
+                    new_content += delta.content
+                    content_count += 1
+
+                    if on_content is not None and content_count >= max_new_tokens:
+                        # 先处理剩余的思维链
+                        if reasoning_content_count != 0:
+                            reasoning_content_count = 0
+                            on_reasoning(new_reasoning_content)
+                            new_reasoning_content = ""
+                            reasoning_content += new_reasoning_content
+                        # 正文回复 
+                        content_count = 0
+                        on_content(new_content)
+                        new_content = ""
+                        content += new_content
+                    
+                elif delta.reasoning_content is not None:
+                    # 无内容时输出思维链，否则是工具调用信息
+                    new_reasoning_content += delta.reasoning_content
+                    reasoning_content_count += 1
+                    # 思维链输出
+                    if on_reasoning is not None and reasoning_content_count >= max_new_tokens:
+                        reasoning_content_count = 0
+                        on_reasoning(new_reasoning_content)
+                        new_reasoning_content = ""
+                        reasoning_content += new_reasoning_content
+                    
                 else:
-                    # 先尝试输出思维链，输出失败说明是工具信息，进入工具处理流程
-                    try:
-                        print(delta.reasoning_content, end="", flush=True)
-                        reasoning_content += delta.reasoning_content
-                    except:
-                        self.collect_tool_calls(tool_calls, delta)
+                    # 处理剩余正文
+                    if content_count != 0:
+                        content_count = 0
+                        on_content(new_content)
+                        new_content = ""
+                        content += new_content
+                    self.collect_tool_calls(tool_calls, delta)
+                current = time.perf_counter()
+                max_new_tokens = 0.9*max_new_tokens + 0.1 * max(count/(current-start+0.02)/15, 1)
+
+            # 处理剩余正文
+            if content_count != 0:
+                content_count = 0
+                on_content(new_content)
+                new_content = ""
+                content += new_content
+
             # 持久化上下文
             self.messages.append(
                 {
-                    "role": "assistant", 
+                    "role": "assistant",
                     "content": content,
                     "reasoning_content": reasoning_content,
                     "tool_calls": tool_calls if tool_calls != [] else None
                 }
             )
-            print()
 
             # 处理工具调用
             if tool_calls == []:
@@ -72,7 +115,8 @@ class Session:
             for tool in tool_calls:
                 tool_function = self.tool_map[tool['function']['name']]
                 tool_result = tool_function(**json.loads(tool['function']['arguments']))
-                print(f"৹ 调用工具：{tool['function']['name']}")
+                if on_tool is not None:
+                    on_tool(tool['function']['name'])
                 self.messages.append({
                     "role": "tool",
                     "tool_call_id": tool['id'],
@@ -80,10 +124,16 @@ class Session:
                 })
 
     def start(self):
-        '''开启会话'''
+        '''开启会话（终端模式）'''
         while True:
             new_prompt = input("User: ")
-            self.run(new_prompt)
+            self.run(
+                new_prompt,
+                on_content=lambda c: print(c, end="", flush=True),
+                on_reasoning=lambda c: print(c, end="", flush=True),
+                on_tool=lambda name: print(f"৹ 调用工具：{name}", flush=True),
+            )
+            print(flush=True)
 
     @staticmethod
     def get_system_prompt(path: str):
