@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Agent</title>
+  <link rel="stylesheet" href="static/highlight.dark.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- 顶部状态导航栏 -->
+    <header class="app-header">
+      <div class="header-left">
+        <span class="app-title">⚡ Simple Agent</span>
+        <span id="badge-cwd" class="pill pill-muted" title="当前工作目录">📁 加载中...</span>
+        <span id="badge-model" class="pill pill-accent" title="当前模型">🧠 加载中...</span>
+      </div>
+      <div class="header-right">
+        <span id="badge-status" class="pill pill-ready">🟢 就绪</span>
+        <button id="btn-reset" class="btn btn-ghost" title="清空当前对话">🧹 清空</button>
+        <button id="btn-settings" class="btn btn-ghost" title="配置 API 与模型">⚙️ 设置</button>
+      </div>
+    </header>
+
+    <!-- 消息对话区域 -->
+    <main id="chat-container">
+      <div id="empty-state" class="empty-state">
+        <div class="empty-icon">🤖</div>
+        <h2>Simple Agent</h2>
+        <p>基于本地轻量 GUI 的 Coding Agent，支持多轮交互与工具调用。</p>
+        <div class="quick-tips">
+          <div class="tip-card" data-prompt="请阅读当前目录的文件结构，并简要概述当前项目的定位与主要功能。">
+            📁 分析当前项目结构
+          </div>
+          <div class="tip-card" data-prompt="运行 shell 工具执行 git status 和 git log -n 3 查看最近提交情况。">
+            🔍 查看最近 Git 提交
+          </div>
+          <div class="tip-card" data-prompt="请检查项目中是否有待优化的代码或可以完善的测试？">
+            💡 代码优化建议
+          </div>
+        </div>
+      </div>
+      <div id="messages" class="messages-list"></div>
+    </main>
+
+    <!-- 底部输入栏 -->
+    <footer class="input-area">
+      <div class="input-box">
+        <textarea
+          id="prompt-input"
+          placeholder="输入您的需求或指令... (Enter 发送，Shift + Enter 换行)"
+          rows="1"
+        ></textarea>
+        <button id="send-btn" class="send-btn" title="发送 (Enter)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+    </footer>
+
+    <!-- 设置弹窗 -->
+    <div id="settings-modal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>⚙️ 服务配置</h3>
+          <button id="btn-close-modal" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-item">
+            <label for="cfg-api-key">API Key <span class="required">*</span></label>
+            <input type="password" id="cfg-api-key" placeholder="sk-..." autocomplete="off" />
+          </div>
+          <div class="form-item">
+            <label for="cfg-base-url">Base URL</label>
+            <input type="text" id="cfg-base-url" placeholder="https://api.deepseek.com/v1" />
+          </div>
+          <div class="form-item">
+            <label for="cfg-model">Model</label>
+            <input type="text" id="cfg-model" placeholder="deepseek-chat" />
+          </div>
+          <div class="form-item">
+            <label for="cfg-reasoning">Reasoning Effort (可选)</label>
+            <input type="text" id="cfg-reasoning" placeholder="default / low / medium / high" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-cancel-config" class="btn btn-secondary">取消</button>
+          <button id="btn-save-config" class="btn btn-primary">保存配置并生效</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="static/marked.min.js"></script>
+  <script src="static/highlight.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
