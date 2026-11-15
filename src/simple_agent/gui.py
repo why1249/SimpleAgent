@@ -6,16 +6,19 @@ from dotenv import load_dotenv
 import webview
 
 from simple_agent.session import Session
-from simple_agent.tools import TOOL_MAP, tools
-from simple_agent.commands import COMMAND_MAP, commands
+from simple_agent.session_manager import SessionManager
+from simple_agent.registers.tools import TOOL_MAP, tools
+from simple_agent.registers.commands import COMMAND_MAP, commands
 
 
 class AgentBridge:
-    def __init__(self, dotenv_path: str):
+    def __init__(self, dotenv_path: str, session_path: str):
         self.dotenv_path = dotenv_path
         self.window = None
         self.is_busy = False
+        self.session_path = session_path
         self.session = Session(tools, TOOL_MAP)
+        self.session_manager = SessionManager(self.session_path)
 
     def set_window(self, window):
         self.window = window
@@ -68,7 +71,7 @@ class AgentBridge:
             f.write(content)
 
         load_dotenv(self.dotenv_path, override=True)
-        self.session.reload_config()
+        self.session.config()
         return {"success": True, "model": model, "cwd": os.getcwd()}
 
     def send_message(self, text: str):
@@ -128,10 +131,9 @@ class AgentBridge:
         thread.start()
         return {"success": True}
 
-
-def run_gui(dotenv_path: str):
+def run_gui(dotenv_path: str, session_path: str):
     """启动 GUI 桌面应用"""
-    bridge = AgentBridge(dotenv_path)
+    bridge = AgentBridge(dotenv_path, session_path)
     web_dir = Path(__file__).parent / "web"
     index_file = web_dir / "index.html"
 
