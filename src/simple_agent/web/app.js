@@ -56,13 +56,13 @@ function updateEmptyState() {
 // 更新状态标签
 function setStatus(text, type = "ready") {
   dom.badgeStatus.textContent = text;
-  dom.badgeStatus.className = "pill";
+  dom.badgeStatus.className = "tui-badge";
   if (type === "ready") {
-    dom.badgeStatus.classList.add("pill-ready");
+    dom.badgeStatus.classList.add("ready");
   } else if (type === "busy") {
-    dom.badgeStatus.classList.add("pill-busy");
+    dom.badgeStatus.classList.add("busy");
   } else if (type === "accent") {
-    dom.badgeStatus.classList.add("pill-accent");
+    dom.badgeStatus.classList.add("accent");
   }
 }
 
@@ -123,16 +123,26 @@ function renderMarkdown(element, markdownText) {
   });
 }
 
-// 创建并追加用户气泡
+// 创建并追加用户提示行 (TUI 风格)
 function appendUserMessage(content) {
   const msgItem = document.createElement("div");
   msgItem.className = "message-item user-message";
 
-  const bubble = document.createElement("div");
-  bubble.className = "user-bubble";
-  bubble.textContent = content;
+  const promptLine = document.createElement("div");
+  promptLine.className = "user-prompt-line";
 
-  msgItem.appendChild(bubble);
+  const symbol = document.createElement("span");
+  symbol.className = "user-prompt-symbol";
+  symbol.textContent = "❯";
+
+  const text = document.createElement("div");
+  text.className = "user-prompt-text";
+  text.textContent = content;
+
+  promptLine.appendChild(symbol);
+  promptLine.appendChild(text);
+  msgItem.appendChild(promptLine);
+
   dom.messagesList.appendChild(msgItem);
   updateEmptyState();
   scrollToBottom();
@@ -145,7 +155,7 @@ function createAssistantMessage() {
 
   const header = document.createElement("div");
   header.className = "assistant-header";
-  header.innerHTML = `<span>🤖 Simple Agent</span>`;
+  header.innerHTML = `<span class="assistant-tag">● simple-agent</span>`;
   msgItem.appendChild(header);
 
   // 思考块（默认预建）
@@ -190,6 +200,22 @@ function createAssistantMessage() {
   state.hasThoughtText = false;
 }
 
+// 追加系统通知卡片
+function appendSystemNotice(message, level = "info") {
+  const item = document.createElement("div");
+  item.className = `system-notice ${level !== "info" ? `system-notice-${level}` : ""}`;
+
+  let icon = "ℹ️";
+  if (level === "error") icon = "⚠️";
+  else if (level === "warning") icon = "🔔";
+  else if (level === "success") icon = "✨";
+
+  item.innerHTML = `<span class="system-notice-content"><span class="notice-icon">${icon}</span> ${message}</span>`;
+  dom.messagesList.appendChild(item);
+  updateEmptyState();
+  scrollToBottom();
+}
+
 // 发送用户输入
 async function handleSend() {
   const text = dom.promptInput.value.trim();
@@ -197,6 +223,24 @@ async function handleSend() {
 
   dom.promptInput.value = "";
   autoResizeInput();
+
+  // 如果是斜杠命令，直接发送给后端，不需要进入大模型思考态
+  if (text.startsWith("/")) {
+    appendUserMessage(text);
+    try {
+      if (window.pywebview && window.pywebview.api) {
+        const res = await window.pywebview.api.send_message(text);
+        if (res && !res.success) {
+          appendSystemNotice(`命令执行失败: ${res.error || "未知错误"}`, "error");
+        }
+      }
+    } catch (err) {
+      console.error("执行命令异常:", err);
+      appendSystemNotice(`调用命令异常: ${err}`, "error");
+    }
+    return;
+  }
+
   dom.promptInput.disabled = true;
   dom.sendBtn.disabled = true;
   state.isBusy = true;
@@ -237,6 +281,26 @@ window.agentBridge = {
     const { type, data } = event;
 
     switch (type) {
+      case "clear_screen": {
+        dom.messagesList.innerHTML = "";
+        state.currentAssistantMsg = null;
+        state.currentThoughtBox = null;
+        state.currentThoughtSummary = null;
+        state.currentThoughtContent = null;
+        state.currentToolsContainer = null;
+        state.currentMarkdownEl = null;
+        state.currentToolCards = {};
+        state.rawMarkdownBuffer = "";
+        state.hasThoughtText = false;
+        updateEmptyState();
+        break;
+      }
+
+      case "system_notice": {
+        appendSystemNotice(data.message, data.level || "info");
+        break;
+      }
+
       case "reasoning": {
         if (!state.currentThoughtContent) return;
         state.hasThoughtText = true;
@@ -379,18 +443,58 @@ async function initApp() {
 
 // 绑定交互事件
 function bindEvents() {
-  // 回车发送，Shift+Enter 换行
+  // 终端历史命令记录
+  const inputHistory = [];
+  let historyIndex = -1;
+  let tempInput = "";
+
+  // 回车发送，Shift+Enter 换行，↑/↓ 浏览历史
   dom.promptInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+      const text = dom.promptInput.value.trim();
+      if (text) {
+        inputHistory.push(text);
+        historyIndex = inputHistory.length;
+      }
       handleSend();
+      return;
+    }
+
+    // 上翻历史指令
+    if (e.key === "ArrowUp" && (dom.promptInput.selectionStart === 0 || !dom.promptInput.value.includes("\n"))) {
+      if (inputHistory.length > 0) {
+        if (historyIndex === inputHistory.length) {
+          tempInput = dom.promptInput.value;
+        }
+        if (historyIndex > 0) {
+          historyIndex--;
+          dom.promptInput.value = inputHistory[historyIndex];
+          autoResizeInput();
+        }
+        e.preventDefault();
+      }
+    }
+
+    // 下翻历史指令
+    if (e.key === "ArrowDown" && (dom.promptInput.selectionStart === dom.promptInput.value.length || !dom.promptInput.value.includes("\n"))) {
+      if (historyIndex < inputHistory.length) {
+        historyIndex++;
+        if (historyIndex === inputHistory.length) {
+          dom.promptInput.value = tempInput;
+        } else {
+          dom.promptInput.value = inputHistory[historyIndex];
+        }
+        autoResizeInput();
+        e.preventDefault();
+      }
     }
   });
 
   dom.promptInput.addEventListener("input", autoResizeInput);
   dom.sendBtn.addEventListener("click", handleSend);
 
-  // 快捷提问气泡
+  // 快捷提问/指令卡片
   document.querySelectorAll(".tip-card").forEach((card) => {
     card.addEventListener("click", () => {
       dom.promptInput.value = card.getAttribute("data-prompt");
@@ -399,59 +503,69 @@ function bindEvents() {
     });
   });
 
-  // 清空对话
-  dom.btnReset.addEventListener("click", async () => {
-    if (state.isBusy) return;
-    if (window.pywebview && window.pywebview.api) {
-      await window.pywebview.api.reset_chat();
-    }
-    dom.messagesList.innerHTML = "";
-    updateEmptyState();
-  });
+  // 清空对话（若存在按钮）
+  if (dom.btnReset) {
+    dom.btnReset.addEventListener("click", async () => {
+      if (state.isBusy) return;
+      if (window.pywebview && window.pywebview.api) {
+        await window.pywebview.api.reset_chat();
+      }
+      dom.messagesList.innerHTML = "";
+      updateEmptyState();
+    });
+  }
 
-  // 设置模态弹窗开关
-  dom.btnSettings.addEventListener("click", () => {
-    dom.settingsModal.classList.remove("hidden");
-  });
+  // 设置模态弹窗开关（若存在按钮）
+  if (dom.btnSettings) {
+    dom.btnSettings.addEventListener("click", () => {
+      dom.settingsModal.classList.remove("hidden");
+    });
+  }
 
-  dom.btnCloseModal.addEventListener("click", () => {
-    dom.settingsModal.classList.add("hidden");
-  });
+  if (dom.btnCloseModal) {
+    dom.btnCloseModal.addEventListener("click", () => {
+      dom.settingsModal.classList.add("hidden");
+    });
+  }
 
-  dom.btnCancelConfig.addEventListener("click", () => {
-    dom.settingsModal.classList.add("hidden");
-  });
+  if (dom.btnCancelConfig) {
+    dom.btnCancelConfig.addEventListener("click", () => {
+      dom.settingsModal.classList.add("hidden");
+    });
+  }
 
   // 保存设置
-  dom.btnSaveConfig.addEventListener("click", async () => {
-    const apiKey = dom.cfgApiKey.value.trim();
-    const baseUrl = dom.cfgBaseUrl.value.trim();
-    const model = dom.cfgModel.value.trim();
-    const reasoning = dom.cfgReasoning.value.trim();
+  if (dom.btnSaveConfig) {
+    dom.btnSaveConfig.addEventListener("click", async () => {
+      const apiKey = dom.cfgApiKey.value.trim();
+      const baseUrl = dom.cfgBaseUrl.value.trim();
+      const model = dom.cfgModel.value.trim();
+      const reasoning = dom.cfgReasoning.value.trim();
 
-    if (!apiKey) {
-      alert("请输入有效的 API Key");
-      return;
-    }
-
-    try {
-      const res = await window.pywebview.api.save_config({
-        api_key: apiKey,
-        base_url: baseUrl,
-        model: model,
-        reasoning_effort: reasoning
-      });
-
-      if (res.success) {
-        dom.badgeModel.textContent = `🧠 ${res.model}`;
-        dom.badgeCwd.textContent = `📁 ${res.cwd}`;
-        dom.settingsModal.classList.add("hidden");
-        alert("配置已成功保存并生效！");
+      if (!apiKey) {
+        alert("请输入有效的 API Key");
+        return;
       }
-    } catch (e) {
-      alert(`保存失败: ${e}`);
-    }
-  });
+
+      try {
+        const res = await window.pywebview.api.save_config({
+          api_key: apiKey,
+          base_url: baseUrl,
+          model: model,
+          reasoning_effort: reasoning
+        });
+
+        if (res.success) {
+          dom.badgeModel.textContent = `🧠 ${res.model}`;
+          dom.badgeCwd.textContent = `📁 ${res.cwd}`;
+          dom.settingsModal.classList.add("hidden");
+          alert("配置已成功保存并生效！");
+        }
+      } catch (e) {
+        alert(`保存失败: ${e}`);
+      }
+    });
+  }
 }
 
 // 页面加载触发

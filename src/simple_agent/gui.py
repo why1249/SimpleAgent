@@ -7,6 +7,7 @@ import webview
 
 from simple_agent.session import Session
 from simple_agent.tools import TOOL_MAP, tools
+from simple_agent.commands import COMMAND_MAP, commands
 
 
 class AgentBridge:
@@ -41,8 +42,13 @@ class AgentBridge:
             "model": os.getenv("MODEL", "deepseek-chat"),
             "base_url": os.getenv("OPENAI_BASE_URL", "https://api.deepseek.com/v1"),
             "reasoning_effort": os.getenv("REASONING_EFFORT", "default"),
-            "is_busy": self.is_busy
+            "is_busy": self.is_busy,
+            "commands": commands
         }
+
+    def get_commands(self):
+        """供前端获取所有支持的斜杠命令定义"""
+        return commands
 
     def save_config(self, config: dict):
         """保存 API 配置到 .env 并热重载 Session"""
@@ -65,18 +71,37 @@ class AgentBridge:
         self.session.reload_config()
         return {"success": True, "model": model, "cwd": os.getcwd()}
 
-    def reset_chat(self):
-        """清空会话历史"""
-        if self.is_busy:
-            return {"success": False, "error": "当前正在执行任务，请稍后再试"}
-        self.session.reset()
-        return {"success": True}
-
     def send_message(self, text: str):
         """前端提交用户消息后触发"""
         content = text.strip()
         if not content:
             return {"success": False, "error": "输入内容不能为空"}
+
+        # 优先拦截斜杠命令
+        if content.startswith("/"):
+            if self.is_busy:
+                return {"success": False, "error": "当前正在执行任务，请等待完成"}
+
+            parts = content.split(maxsplit=1)
+            cmd_name = parts[0]
+            args = parts[1] if len(parts) > 1 else ""
+
+            handler = COMMAND_MAP.get(cmd_name)
+            if handler:
+                try:
+                    handler(self, args)
+                except Exception as e:
+                    self.emit("system_notice", {
+                        "message": f"执行命令 {cmd_name} 失败: {str(e)}",
+                        "level": "error"
+                    })
+            else:
+                self.emit("system_notice", {
+                    "message": f"未知的斜杠命令: {cmd_name}。可输入 /help 查看支持的命令。",
+                    "level": "warning"
+                })
+            return {"success": True, "is_command": True}
+
         if self.is_busy:
             return {"success": False, "error": "当前正在执行任务，请等待完成"}
 
