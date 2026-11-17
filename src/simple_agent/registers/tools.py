@@ -7,8 +7,8 @@ tools = [
     shell.TOOL_SCHEMA
 ]
 TOOL_MAP = {
-    "write_file": write_file.definition,
-    "read_file": read_file.definition,
-    "edit": edit.definition,
-    "shell": shell.definition,
+    "write_file": write_file.execute,
+    "read_file": read_file.execute,
+    "edit": edit.execute,
+    "shell": shell.execute,
 }

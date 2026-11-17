@@ -9,7 +9,7 @@ from simple_agent.session import Session
 from simple_agent.session_manager import SessionManager
 from simple_agent.registers.tools import TOOL_MAP, tools
 from simple_agent.registers.commands import COMMAND_MAP, commands
-
+from simple_agent.registers.providers import PROVIDER_MAP, providers
 
 class AgentBridge:
     def __init__(self, dotenv_path: str, session_path: str):
@@ -17,7 +17,7 @@ class AgentBridge:
         self.window = None
         self.is_busy = False
         self.session_path = session_path
-        self.session = Session(tools, TOOL_MAP)
+        self.session = Session(tools, TOOL_MAP, PROVIDER_MAP["deepseek"])
         self.session_manager = SessionManager(self.session_path)
 
     def set_window(self, window):
@@ -71,7 +71,7 @@ class AgentBridge:
             f.write(content)
 
         load_dotenv(self.dotenv_path, override=True)
-        self.session.config()
+        self.session.reload_config()
         return {"success": True, "model": model, "cwd": os.getcwd()}
 
     def send_message(self, text: str):
@@ -114,6 +114,7 @@ class AgentBridge:
             try:
                 self.emit("start", {"user_content": content})
                 self.session.run(
+                    self.session,
                     content,
                     on_reasoning=lambda chunk: self.emit("reasoning", {"chunk": chunk}),
                     on_content=lambda chunk: self.emit("content", {"chunk": chunk}),

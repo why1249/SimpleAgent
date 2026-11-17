@@ -17,7 +17,7 @@ TOOL_SCHEMA = {
     }
 }
 
-def definition(command: str, timeout: int = 60):
+def execute(command: str, timeout: int = 60):
     try:
         result = subprocess.run(
             args=command,

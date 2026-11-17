@@ -16,7 +16,7 @@ TOOL_SCHEMA = {
     }
 }
 
-def definition(path: str):
+def execute(path: str):
     try:
         if os.path.isfile(path):
             with open(path, 'r', encoding='utf-8') as f:

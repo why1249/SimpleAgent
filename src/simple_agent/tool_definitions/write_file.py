@@ -16,7 +16,7 @@ TOOL_SCHEMA = {
     }
 }
 
-def definition(path: str, content: str):
+def execute(path: str, content: str):
     try:
         # 自动创建父级文件夹，否则直接写入不存在路径会报错
         if os.path.isabs(path):

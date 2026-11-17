@@ -18,7 +18,7 @@ TOOL_SCHEMA = {
     }
 }
 
-def definition(path: str, old_string: str, new_string: str):
+def execute(path: str, old_string: str, new_string: str):
     try:
         with open(path, 'r', encoding='utf-8') as f:
             content = f.read()
