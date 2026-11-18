@@ -1,0 +1,46 @@
+:root {
+  /* 浅色极简中性色板 (Zinc / Neutral) */
+  --bg-canvas: #fafafa;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f4f4f5;
+  --bg-hover: #eceef1;
+  --bg-code: #f6f8fa;
+
+  --border-subtle: #e4e4e7;
+  --border-default: #d4d4d8;
+  --border-focus: #2563eb;
+
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-muted: #71717a;
+  --text-dim: #a1a1aa;
+
+  /* 强调色与语义状态色 */
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: rgba(37, 99, 235, 0.08);
+  --accent-ring: rgba(37, 99, 235, 0.14);
+
+  --status-ready: #16a34a;
+  --status-ready-bg: rgba(22, 163, 74, 0.1);
+  --status-busy: #d97706;
+  --status-busy-bg: rgba(217, 119, 6, 0.1);
+  --status-error: #dc2626;
+  --status-error-bg: rgba(220, 38, 38, 0.08);
+
+  /* 字体 */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+  /* 尺寸与圆角 */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --content-max-width: 780px;
+  --topbar-height: 40px;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.12);
+}

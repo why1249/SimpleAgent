@@ -145,7 +145,6 @@ def run_gui(dotenv_path: str, session_path: str):
         width=1040,
         height=780,
         min_size=(640, 480),
-        background_color="#18181b"
     )
     bridge.set_window(window)
     webview.start(debug=False)

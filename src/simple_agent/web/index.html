@@ -4,84 +4,98 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Simple Agent</title>
-  <link rel="stylesheet" href="static/highlight.dark.min.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/highlight-light.css">
 </head>
 <body>
   <div id="app">
-    <!-- 顶部 TUI 状态栏 (Tmux/Airline 风格) -->
-    <header class="tui-statusbar">
-      <div class="statusbar-left">
-        <span class="tui-logo">⚡ SIMPLE_AGENT</span>
-        <span class="tui-sep">|</span>
-        <span id="badge-cwd" class="tui-tag" title="当前工作目录">📁 ~</span>
-        <span class="tui-sep">|</span>
-        <span id="badge-model" class="tui-tag tui-tag-accent" title="当前模型">🧠 加载中...</span>
+    <!-- 顶部极简 TUI 状态栏 -->
+    <header class="status-bar">
+      <div class="status-bar-left">
+        <span class="brand-name">simple-agent</span>
+        <span class="bar-divider">/</span>
+        <span id="badge-cwd" class="meta-chip" title="当前工作目录">~</span>
+        <span class="bar-divider">/</span>
+        <button id="badge-model" class="meta-chip meta-chip-clickable" type="button" title="点击切换模型或配置">加载中...</button>
       </div>
-      <div class="statusbar-right">
-        <span id="badge-status" class="tui-badge ready">● READY</span>
-        <span class="tui-shortcut-hint">↵ send | /clear</span>
+      <div class="status-bar-right">
+        <div id="status-pill" class="status-pill">
+          <span class="status-dot"></span>
+          <span id="status-text">Ready</span>
+        </div>
+        <button id="btn-settings" class="icon-btn" type="button" title="设置 (Ctrl+,)" aria-label="打开设置">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.77 1 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
       </div>
     </header>
 
-    <!-- 终端主显示区域 -->
-    <main id="chat-container">
+    <!-- 主对话滚动区 -->
+    <main id="chat-container" class="chat-container">
       <div id="empty-state" class="empty-state">
-        <pre class="ascii-banner">
-  ____  _                 _          _                    _   
- / ___|(_)_ __ ___  _ __ | | ___    / \   __ _  ___ _ __ | |_ 
- \___ \| | '_ ` _ \| '_ \| |/ _ \  / _ \ / _` |/ _ \ '_ \| __|
-  ___) | | | | | | | |_) | |  __/ / ___ \ (_| |  __/ | | | |_ 
- |____/|_|_| |_| |_| .__/|_|\___|/_/   \_\__, |\___|_| |_|\__|
-                   |_|                   |___/                </pre>
-        <div class="empty-desc">
-          <p class="desc-title">Simple Agent <span class="version-tag">v0.1.2</span> · Coding Agent</p>
-          <p class="desc-subtitle">基于 TUI 交互范式驱动，支持多轮对话、斜杠命令与本地工具链。</p>
+        <div class="empty-header">
+          <span class="empty-badge">v0.1.2 · Coding Agent</span>
+          <h1 class="empty-title">准备就绪</h1>
+          <p class="empty-subtitle">输入任务指令开始工作，或输入 / 呼出斜杠命令。</p>
         </div>
-        <div class="cli-tips-box">
-          <div class="cli-tips-header">QUICK START / 快捷指令：</div>
-          <div class="cli-tips-list">
-            <div class="tip-card" data-prompt="/clear">
-              <span class="tip-cmd">/clear</span>
-              <span class="tip-desc">清空当前会话上下文并刷屏</span>
-            </div>
-            <div class="tip-card" data-prompt="请阅读当前目录的文件结构，并简要概述当前项目的定位与主要功能。">
-              <span class="tip-cmd">📁 分析项目</span>
-              <span class="tip-desc">扫描工作区文件与整体定位</span>
-            </div>
-            <div class="tip-card" data-prompt="运行 shell 工具执行 git status 和 git log -n 3 查看最近提交情况。">
-              <span class="tip-cmd">🔍 Git 状态</span>
-              <span class="tip-desc">检查工作树修改与最近提交</span>
-            </div>
-          </div>
+        <div class="quick-list">
+          <button class="quick-item" type="button" data-prompt="请阅读当前目录的文件结构，并简要概述当前项目的定位与主要功能。">
+            <span class="quick-cmd">分析当前项目</span>
+            <span class="quick-desc">扫描工作区目录与核心模块</span>
+          </button>
+          <button class="quick-item" type="button" data-prompt="运行 shell 工具执行 git status 和 git log -n 5 查看最近提交情况。">
+            <span class="quick-cmd">查看 Git 状态</span>
+            <span class="quick-desc">检查工作树修改与近期提交</span>
+          </button>
+          <button class="quick-item" type="button" data-prompt="/new">
+            <span class="quick-cmd">/new</span>
+            <span class="quick-desc">保存当前进度并开启新会话</span>
+          </button>
         </div>
       </div>
+
       <div id="messages" class="messages-list"></div>
     </main>
 
-    <!-- 底部终端命令输入栏 -->
-    <footer class="input-area">
-      <div class="input-box">
-        <span class="input-prompt-symbol">❯</span>
-        <textarea
-          id="prompt-input"
-          placeholder="输入需求或命令 (如 /clear)... (Enter 发送，Shift+Enter 换行，↑/↓ 翻阅历史)"
-          rows="1"
-          autocomplete="off"
-          spellcheck="false"
-        ></textarea>
-        <button id="send-btn" class="send-btn" title="执行 (Enter)">
-          <span class="kbd-icon">↵</span>
-        </button>
+    <!-- 底部命令行输入坞 -->
+    <footer class="input-dock">
+      <div class="input-dock-inner">
+        <!-- 斜杠命令补全浮层 -->
+        <div id="slash-menu" class="slash-menu hidden" role="listbox" aria-label="斜杠命令">
+          <div class="slash-menu-header">命令 · ↑/↓ 选择 · Tab 补全 · Enter 执行</div>
+          <div id="slash-menu-list" class="slash-menu-list"></div>
+        </div>
+
+        <div class="input-box">
+          <span class="input-prompt-symbol">›</span>
+          <textarea
+            id="prompt-input"
+            class="prompt-input"
+            placeholder="输入需求，或按 / 查看命令..."
+            rows="1"
+            autocomplete="off"
+            spellcheck="false"
+          ></textarea>
+          <button id="send-btn" class="send-btn" type="button" title="发送 (Enter)">↵</button>
+        </div>
+
+        <div class="input-hints">
+          <span>Enter 发送 · Shift+Enter 换行 · ↑/↓ 历史</span>
+          <span>/ 命令 · Ctrl+L 清屏 · Ctrl+, 设置</span>
+        </div>
       </div>
     </footer>
 
-    <!-- 服务配置模态框（初次缺少 API Key 时引导） -->
-    <div id="settings-modal" class="modal-overlay hidden">
+    <!-- 服务配置模态框 -->
+    <div id="settings-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-card">
         <div class="modal-header">
-          <h3>⚙️ 服务配置引导</h3>
-          <button id="btn-close-modal" class="btn-close">×</button>
+          <h3 id="modal-title">模型与服务配置</h3>
+          <button id="btn-close-modal" class="icon-btn" type="button" aria-label="关闭">×</button>
         </div>
         <div class="modal-body">
           <div class="form-item">
@@ -97,20 +111,34 @@
             <input type="text" id="cfg-model" placeholder="deepseek-chat" />
           </div>
           <div class="form-item">
-            <label for="cfg-reasoning">Reasoning Effort (可选)</label>
+            <label for="cfg-reasoning">Reasoning Effort</label>
             <input type="text" id="cfg-reasoning" placeholder="default / low / medium / high" />
           </div>
+          <div id="modal-feedback" class="modal-feedback hidden"></div>
         </div>
         <div class="modal-footer">
-          <button id="btn-cancel-config" class="btn btn-secondary">取消</button>
-          <button id="btn-save-config" class="btn btn-primary">保存配置</button>
+          <button id="btn-cancel-config" class="btn btn-secondary" type="button">取消</button>
+          <button id="btn-save-config" class="btn btn-primary" type="button">保存并生效</button>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="static/marked.min.js"></script>
-  <script src="static/highlight.min.js"></script>
-  <script src="app.js"></script>
+  <!-- 第三方静态库 -->
+  <script defer src="static/marked.min.js"></script>
+  <script defer src="static/highlight.min.js"></script>
+
+  <!-- 模块化前端脚本（按依赖顺序加载，兼容 file:// 协议） -->
+  <script defer src="js/state.js"></script>
+  <script defer src="js/utils/dom.js"></script>
+  <script defer src="js/utils/markdown.js"></script>
+  <script defer src="js/bridge.js"></script>
+  <script defer src="js/components/status_bar.js"></script>
+  <script defer src="js/components/tool_step.js"></script>
+  <script defer src="js/components/chat_view.js"></script>
+  <script defer src="js/components/slash_menu.js"></script>
+  <script defer src="js/components/input_bar.js"></script>
+  <script defer src="js/components/settings_modal.js"></script>
+  <script defer src="js/main.js"></script>
 </body>
 </html>
