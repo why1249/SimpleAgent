@@ -10,8 +10,8 @@ window.App.components = window.App.components || {};
     els.emptyState.style.display = hasMessages ? "none" : "block";
   }
 
-  function scrollToBottom() {
-    App.dom.scrollToBottom(els.container);
+  function scrollToBottom(force = false) {
+    App.dom.scrollToBottom(els.container, force);
   }
 
   App.components.chatView = {
@@ -34,34 +34,34 @@ window.App.components = window.App.components || {};
 
       els.messagesList.appendChild(item);
       updateEmptyState();
-      scrollToBottom();
+      scrollToBottom(true);
     },
 
     startAssistantTurn() {
       const { el } = App.dom;
 
       const item = el("div", "message-item assistant-turn");
-      const meta = el("div", "assistant-meta");
-      meta.appendChild(el("span", "assistant-meta-dot"));
-      meta.appendChild(el("span", "", "agent"));
-      item.appendChild(meta);
+      const stepsStack = el("div", "steps-stack is-empty");
 
-      const stepsStack = el("div", "steps-stack");
-
-      // 思考过程折叠条（仅在收到 reasoning 事件时显示）
+      // 思考过程单行树节点（仅在收到 reasoning 事件时显现）
       const thoughtDetails = el("details", "step-row step-thinking hidden");
       thoughtDetails.open = true;
 
       const thoughtSummary = el("summary", "step-summary");
       const thoughtLeft = el("div", "step-summary-left");
-      const thoughtIndicator = el("span", "step-indicator is-running");
-      const thoughtLabel = el("span", "step-name", "思考过程");
-      thoughtLeft.appendChild(thoughtIndicator);
+      const thoughtGlyph = el("span", "step-glyph is-running", "·");
+      const thoughtLabel = el("span", "step-name", "thinking");
+      thoughtLeft.appendChild(thoughtGlyph);
       thoughtLeft.appendChild(thoughtLabel);
 
-      const thoughtBadge = el("span", "step-badge is-running", "思考中");
+      const thoughtMeta = el("span", "step-meta is-running");
+      const thoughtTime = el("span", "step-time", "running");
+      const thoughtToggle = el("span", "step-toggle-mark");
+      thoughtMeta.appendChild(thoughtTime);
+      thoughtMeta.appendChild(thoughtToggle);
+
       thoughtSummary.appendChild(thoughtLeft);
-      thoughtSummary.appendChild(thoughtBadge);
+      thoughtSummary.appendChild(thoughtMeta);
 
       const thoughtBody = el("div", "step-body");
       const thoughtPre = el("pre", "step-pre");
@@ -78,17 +78,20 @@ window.App.components = window.App.components || {};
 
       els.messagesList.appendChild(item);
       updateEmptyState();
-      scrollToBottom();
+      scrollToBottom(true);
 
       App.state.activeTurn = {
         rootEl: item,
         stepsStack,
         thoughtDetails,
-        thoughtIndicator,
-        thoughtBadge,
+        thoughtGlyph,
+        thoughtMeta,
+        thoughtTime,
         thoughtPre,
+        thoughtStartedAt: 0,
         markdownEl,
         toolMap: {},
+        toolList: [],
         lastToolStep: null,
         rawMarkdown: "",
         hasThought: false,
@@ -102,12 +105,15 @@ window.App.components = window.App.components || {};
 
       if (!turn.hasThought) {
         turn.hasThought = true;
+        turn.thoughtStartedAt = performance.now();
+        turn.stepsStack.classList.remove("is-empty");
         turn.thoughtDetails.classList.remove("hidden");
+        App.dom.spinner.start(turn.thoughtGlyph);
       }
 
       turn.thoughtPre.textContent += chunk;
       turn.thoughtPre.scrollTop = turn.thoughtPre.scrollHeight;
-      scrollToBottom();
+      scrollToBottom(false);
     },
 
     finalizeThinking(collapse = true) {
@@ -116,9 +122,10 @@ window.App.components = window.App.components || {};
 
       turn.thoughtFinalized = true;
       if (turn.hasThought) {
-        turn.thoughtIndicator.className = "step-indicator is-done";
-        turn.thoughtBadge.className = "step-badge is-done";
-        turn.thoughtBadge.textContent = "已完成";
+        App.dom.spinner.stop(turn.thoughtGlyph, "·");
+        turn.thoughtGlyph.className = "step-glyph is-done";
+        turn.thoughtMeta.className = "step-meta";
+        turn.thoughtTime.textContent = App.dom.formatDuration(turn.thoughtStartedAt);
         if (collapse) {
           turn.thoughtDetails.open = false;
         }
@@ -134,7 +141,7 @@ window.App.components = window.App.components || {};
       this.finalizeThinking(true);
       turn.rawMarkdown += chunk;
       App.markdown.render(turn.markdownEl, turn.rawMarkdown);
-      scrollToBottom();
+      scrollToBottom(false);
     },
 
     appendToolCall({ id, name, args }) {
@@ -142,11 +149,14 @@ window.App.components = window.App.components || {};
       if (!turn) return;
 
       this.finalizeThinking(true);
+      turn.stepsStack.classList.remove("is-empty");
+
       const stepRef = App.components.toolStep.create(name, args);
       turn.stepsStack.appendChild(stepRef.element);
       turn.toolMap[id || name] = stepRef;
+      turn.toolList.push(stepRef);
       turn.lastToolStep = stepRef;
-      scrollToBottom();
+      scrollToBottom(false);
     },
 
     completeToolCall({ id, name, result }) {
@@ -157,34 +167,41 @@ window.App.components = window.App.components || {};
       if (stepRef) {
         App.components.toolStep.complete(stepRef, result);
       }
-      scrollToBottom();
+      scrollToBottom(false);
     },
 
     appendTurnError(message) {
       const turn = App.state.activeTurn;
-      const errBox = App.dom.el("div", "turn-error-box", `错误：${message}`);
+      const errBox = App.dom.el("div", "turn-error-box", `error: ${message}`);
       if (turn && turn.rootEl) {
         turn.rootEl.appendChild(errBox);
       } else {
         this.appendSystemNotice(message, "error");
       }
-      scrollToBottom();
+      scrollToBottom(false);
     },
 
     finishTurn() {
+      const turn = App.state.activeTurn;
       this.finalizeThinking(false);
+      if (turn && Array.isArray(turn.toolList)) {
+        turn.toolList.forEach((stepRef) => {
+          if (!stepRef.completed) {
+            App.components.toolStep.abort(stepRef);
+          }
+        });
+      }
       App.state.resetTurn();
     },
 
     appendSystemNotice(message, level = "info") {
       const { el } = App.dom;
       const levelClass = level && level !== "info" ? ` is-${level}` : "";
-      const wrapper = el("div", `system-notice${levelClass}`);
-      wrapper.appendChild(el("span", "system-notice-pill", message));
+      const line = el("div", `system-notice${levelClass}`, message);
 
-      els.messagesList.appendChild(wrapper);
+      els.messagesList.appendChild(line);
       updateEmptyState();
-      scrollToBottom();
+      scrollToBottom(true);
     },
 
     clear() {

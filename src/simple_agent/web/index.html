@@ -11,24 +11,30 @@
 </head>
 <body>
   <div id="app">
-    <!-- 顶部极简 TUI 状态栏 -->
+    <!-- 顶部工业极简 TUI 状态栏 -->
     <header class="status-bar">
       <div class="status-bar-left">
         <span class="brand-name">simple-agent</span>
-        <span class="bar-divider">/</span>
-        <span id="badge-cwd" class="meta-chip" title="当前工作目录">~</span>
-        <span class="bar-divider">/</span>
-        <button id="badge-model" class="meta-chip meta-chip-clickable" type="button" title="点击切换模型或配置">加载中...</button>
+        <span class="bar-sep"></span>
+        <span id="badge-cwd" class="meta-cwd" title="当前工作目录">~</span>
+        <span class="bar-sep"></span>
+        <button id="badge-model" class="meta-model-btn" type="button" title="切换模型与服务配置 (Ctrl+,)">
+          <span class="meta-key">model:</span>
+          <span id="badge-model-val" class="meta-val">...</span>
+        </button>
       </div>
       <div class="status-bar-right">
-        <div id="status-pill" class="status-pill">
-          <span class="status-dot"></span>
-          <span id="status-text">Ready</span>
+        <div id="status-pill" class="status-readout">
+          <span id="status-glyph" class="status-glyph">▪</span>
+          <span id="status-text">idle</span>
         </div>
-        <button id="btn-settings" class="icon-btn" type="button" title="设置 (Ctrl+,)" aria-label="打开设置">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.77 1 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        <span class="bar-sep"></span>
+        <button id="btn-settings" class="icon-btn" type="button" title="服务配置 (Ctrl+,)" aria-label="打开设置">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.35">
+            <line x1="2" y1="4.5" x2="14" y2="4.5"></line>
+            <rect x="9" y="2.5" width="2.6" height="4" fill="var(--bg-surface)"></rect>
+            <line x1="2" y1="11.5" x2="14" y2="11.5"></line>
+            <rect x="4.4" y="9.5" width="2.6" height="4" fill="var(--bg-surface)"></rect>
           </svg>
         </button>
       </div>
@@ -36,46 +42,72 @@
 
     <!-- 主对话滚动区 -->
     <main id="chat-container" class="chat-container">
+      <!-- 终端风格启动规格面板（无对话时显示） -->
       <div id="empty-state" class="empty-state">
-        <div class="empty-header">
-          <span class="empty-badge">v0.1.2 · Coding Agent</span>
-          <h1 class="empty-title">准备就绪</h1>
-          <p class="empty-subtitle">输入任务指令开始工作，或输入 / 呼出斜杠命令。</p>
+        <div class="spec-header">
+          <span class="spec-title">simple-agent</span>
+          <span class="spec-version">v0.1.2</span>
         </div>
-        <div class="quick-list">
-          <button class="quick-item" type="button" data-prompt="请阅读当前目录的文件结构，并简要概述当前项目的定位与主要功能。">
-            <span class="quick-cmd">分析当前项目</span>
-            <span class="quick-desc">扫描工作区目录与核心模块</span>
+
+        <div class="spec-section">
+          <div class="spec-row">
+            <span class="spec-key">workspace</span>
+            <span id="empty-cwd" class="spec-val">~</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-key">model</span>
+            <button id="empty-model" class="spec-val spec-val-btn" type="button" title="点击修改配置">...</button>
+          </div>
+          <div class="spec-row">
+            <span class="spec-key">tools</span>
+            <span id="empty-tools" class="spec-val spec-val-muted">read_file · write_file · edit · shell</span>
+          </div>
+        </div>
+
+        <div class="spec-section spec-commands">
+          <button class="spec-cmd-row" type="button" data-cmd="/new">
+            <span class="spec-key">/new</span>
+            <span class="spec-desc">归档当前进度并开启新会话</span>
           </button>
-          <button class="quick-item" type="button" data-prompt="运行 shell 工具执行 git status 和 git log -n 5 查看最近提交情况。">
-            <span class="quick-cmd">查看 Git 状态</span>
-            <span class="quick-desc">检查工作树修改与近期提交</span>
+          <button class="spec-cmd-row" type="button" data-cmd="/clear">
+            <span class="spec-key">/clear</span>
+            <span class="spec-desc">清空当前屏幕视图</span>
+            <kbd class="spec-kbd">Ctrl+L</kbd>
           </button>
-          <button class="quick-item" type="button" data-prompt="/new">
-            <span class="quick-cmd">/new</span>
-            <span class="quick-desc">保存当前进度并开启新会话</span>
+          <button class="spec-cmd-row" type="button" data-open-settings="true">
+            <span class="spec-key">config</span>
+            <span class="spec-desc">模型、API Key 与推理强度配置</span>
+            <kbd class="spec-kbd">Ctrl+,</kbd>
           </button>
+          <div class="spec-cmd-row is-static">
+            <span class="spec-key">history</span>
+            <span class="spec-desc">回溯上一条/下一条历史输入</span>
+            <kbd class="spec-kbd">↑ / ↓</kbd>
+          </div>
         </div>
       </div>
 
       <div id="messages" class="messages-list"></div>
     </main>
 
-    <!-- 底部命令行输入坞 -->
+    <!-- 底部居中限宽命令行输入区 -->
     <footer class="input-dock">
       <div class="input-dock-inner">
         <!-- 斜杠命令补全浮层 -->
         <div id="slash-menu" class="slash-menu hidden" role="listbox" aria-label="斜杠命令">
-          <div class="slash-menu-header">命令 · ↑/↓ 选择 · Tab 补全 · Enter 执行</div>
+          <div class="slash-menu-header">
+            <span>COMMANDS</span>
+            <span>↑/↓ 选择 · Tab 补全 · Enter 执行</span>
+          </div>
           <div id="slash-menu-list" class="slash-menu-list"></div>
         </div>
 
-        <div class="input-box">
+        <div id="input-box" class="input-box">
           <span class="input-prompt-symbol">›</span>
           <textarea
             id="prompt-input"
             class="prompt-input"
-            placeholder="输入需求，或按 / 查看命令..."
+            placeholder="输入指令，或输入 / 调用命令"
             rows="1"
             autocomplete="off"
             spellcheck="false"
@@ -84,8 +116,8 @@
         </div>
 
         <div class="input-hints">
-          <span>Enter 发送 · Shift+Enter 换行 · ↑/↓ 历史</span>
-          <span>/ 命令 · Ctrl+L 清屏 · Ctrl+, 设置</span>
+          <span>Enter 发送 · Shift+Enter 换行</span>
+          <span>/ 命令 · Ctrl+L 清屏</span>
         </div>
       </div>
     </footer>
@@ -94,7 +126,7 @@
     <div id="settings-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-card">
         <div class="modal-header">
-          <h3 id="modal-title">模型与服务配置</h3>
+          <h3 id="modal-title">SERVICE CONFIG</h3>
           <button id="btn-close-modal" class="icon-btn" type="button" aria-label="关闭">×</button>
         </div>
         <div class="modal-body">
@@ -118,7 +150,7 @@
         </div>
         <div class="modal-footer">
           <button id="btn-cancel-config" class="btn btn-secondary" type="button">取消</button>
-          <button id="btn-save-config" class="btn btn-primary" type="button">保存并生效</button>
+          <button id="btn-save-config" class="btn btn-primary" type="button">保存生效</button>
         </div>
       </div>
     </div>

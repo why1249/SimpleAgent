@@ -46,7 +46,8 @@ class AgentBridge:
             "base_url": os.getenv("OPENAI_BASE_URL", "https://api.deepseek.com/v1"),
             "reasoning_effort": os.getenv("REASONING_EFFORT", "default"),
             "is_busy": self.is_busy,
-            "commands": commands
+            "commands": commands,
+            "tools": list(TOOL_MAP.keys()),
         }
 
     def get_commands(self):

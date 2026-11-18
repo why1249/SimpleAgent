@@ -2,6 +2,7 @@ window.App = window.App || {};
 window.App.components = window.App.components || {};
 
 (function (App) {
+  let inputBox = null;
   let textarea = null;
   let sendBtn = null;
   let onSubmitHandler = null;
@@ -42,6 +43,7 @@ window.App.components = window.App.components || {};
 
   App.components.inputBar = {
     init({ onSubmit }) {
+      inputBox = document.getElementById("input-box");
       textarea = document.getElementById("prompt-input");
       sendBtn = document.getElementById("send-btn");
       onSubmitHandler = onSubmit;
@@ -139,12 +141,12 @@ window.App.components = window.App.components || {};
         sendBtn.addEventListener("click", submitCurrent);
       }
 
-      // 空状态快捷指令卡片
-      document.querySelectorAll(".quick-item").forEach((item) => {
+      // 空状态命令速查行点击执行（/new, /clear）
+      document.querySelectorAll(".spec-cmd-row[data-cmd]").forEach((item) => {
         item.addEventListener("click", () => {
-          const prompt = item.getAttribute("data-prompt");
-          if (!prompt || App.state.isBusy) return;
-          textarea.value = prompt;
+          const cmd = item.getAttribute("data-cmd");
+          if (!cmd || App.state.isBusy) return;
+          textarea.value = cmd;
           autoResize();
           submitCurrent();
         });
@@ -152,6 +154,7 @@ window.App.components = window.App.components || {};
     },
 
     setBusy(busy) {
+      if (inputBox) inputBox.classList.toggle("is-busy", Boolean(busy));
       if (textarea) textarea.disabled = busy;
       if (sendBtn) sendBtn.disabled = busy;
       if (!busy) {

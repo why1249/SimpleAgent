@@ -57,14 +57,14 @@ window.App = window.App || {};
         const langName = langClass ? langClass.replace("language-", "") : "text";
 
         const langSpan = App.dom.el("span", "", langName);
-        const copyBtn = App.dom.el("button", "btn-copy", "复制");
+        const copyBtn = App.dom.el("button", "btn-copy", "copy");
         copyBtn.type = "button";
         copyBtn.addEventListener("click", () => {
           copyText(codeBlock.innerText).then(() => {
-            copyBtn.textContent = "已复制";
+            copyBtn.textContent = "copied";
             setTimeout(() => {
-              copyBtn.textContent = "复制";
-            }, 1500);
+              copyBtn.textContent = "copy";
+            }, 1400);
           });
         });
 

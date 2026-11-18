@@ -1,46 +1,48 @@
 :root {
-  /* 浅色极简中性色板 (Zinc / Neutral) */
-  --bg-canvas: #fafafa;
+  /* 冷峻工业风中性色板 (Anodized Light / Graphite Ink) */
+  --bg-canvas: #f5f5f6;
   --bg-surface: #ffffff;
-  --bg-subtle: #f4f4f5;
-  --bg-hover: #eceef1;
-  --bg-code: #f6f8fa;
+  --bg-subtle: #ebebee;
+  --bg-hover: #e1e1e6;
+  --bg-code: #ffffff;
 
-  --border-subtle: #e4e4e7;
-  --border-default: #d4d4d8;
-  --border-focus: #2563eb;
+  /* 1px 精密结构线 */
+  --border-subtle: #dfe0e4;
+  --border-default: #c6c7ce;
+  --border-strong: #141416;
 
-  --text-primary: #18181b;
-  --text-secondary: #52525b;
-  --text-muted: #71717a;
-  --text-dim: #a1a1aa;
+  /* 高对比石墨文字层级 */
+  --text-primary: #141416;
+  --text-secondary: #484950;
+  --text-muted: #72737c;
+  --text-dim: #9a9ba4;
 
-  /* 强调色与语义状态色 */
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --accent-soft: rgba(37, 99, 235, 0.08);
-  --accent-ring: rgba(37, 99, 235, 0.14);
+  /* 主交互强调色：纯粹石墨黑，摒弃默认网页亮蓝 */
+  --accent: #141416;
+  --accent-hover: #2c2d32;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(20, 20, 22, 0.05);
 
-  --status-ready: #16a34a;
-  --status-ready-bg: rgba(22, 163, 74, 0.1);
-  --status-busy: #d97706;
-  --status-busy-bg: rgba(217, 119, 6, 0.1);
-  --status-error: #dc2626;
-  --status-error-bg: rgba(220, 38, 38, 0.08);
+  /* 工业信号状态色（仅用于字符状态符与告警文本，不做大面积胶囊渲染） */
+  --status-ready: #15803d;
+  --status-busy: #b45309;
+  --status-error: #b91c1c;
+  --status-error-bg: rgba(185, 28, 28, 0.06);
+  --status-warning-bg: rgba(180, 83, 9, 0.06);
+  --status-success-bg: rgba(21, 128, 61, 0.06);
 
-  /* 字体 */
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  /* 字体栈：界面骨架与命令行优先等宽，长正文保持清晰无衬线 */
+  --font-mono: "JetBrains Mono", "Maple Mono", "Cascadia Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "PingFang SC", monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
 
-  /* 尺寸与圆角 */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 12px;
+  /* 锐利微圆角与布局尺度 */
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
   --content-max-width: 780px;
-  --topbar-height: 40px;
+  --topbar-height: 36px;
 
-  /* 阴影 */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.12);
+  /* 仅浮层与模态框保留硬朗浅投影，常规区块零阴影 */
+  --shadow-float: 0 8px 24px rgba(15, 15, 18, 0.09);
+  --shadow-modal: 0 16px 40px rgba(15, 15, 18, 0.14);
 }

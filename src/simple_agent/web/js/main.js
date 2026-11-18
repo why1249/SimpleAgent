@@ -23,7 +23,7 @@ window.App = window.App || {};
     // 普通对话消息
     App.state.isBusy = true;
     inputBar.setBusy(true);
-    statusBar.setStatus("Thinking", "busy");
+    statusBar.setStatus("thinking", "busy");
     chatView.appendUserMessage(text);
     chatView.startAssistantTurn();
 
@@ -32,14 +32,14 @@ window.App = window.App || {};
       if (res && !res.success) {
         App.state.isBusy = false;
         inputBar.setBusy(false);
-        statusBar.setStatus("Error", "error");
+        statusBar.setStatus("error", "error");
         chatView.appendTurnError(res.error || "发送失败");
         chatView.finishTurn();
       }
     } catch (err) {
       App.state.isBusy = false;
       inputBar.setBusy(false);
-      statusBar.setStatus("Error", "error");
+      statusBar.setStatus("error", "error");
       chatView.appendTurnError(String(err));
       chatView.finishTurn();
     }
@@ -52,6 +52,7 @@ window.App = window.App || {};
     switch (type) {
       case "clear_screen":
         chatView.clear();
+        statusBar.setStatus("idle", "ready");
         break;
 
       case "system_notice":
@@ -59,34 +60,36 @@ window.App = window.App || {};
         break;
 
       case "reasoning":
-        statusBar.setStatus("Thinking", "busy");
+        statusBar.setStatus("thinking", "busy");
         chatView.appendReasoning(data.chunk || "");
         break;
 
       case "content":
-        statusBar.setStatus("Replying", "active");
+        statusBar.setStatus("streaming", "active");
         chatView.appendContent(data.chunk || "");
         break;
 
       case "tool_call":
-        statusBar.setStatus(`Tool: ${data.name}`, "busy");
+        statusBar.setStatus(`exec:${data.name}`, "busy");
         chatView.appendToolCall(data || {});
         break;
 
       case "tool_result":
-        statusBar.setStatus("Thinking", "busy");
+        statusBar.setStatus("thinking", "busy");
         chatView.completeToolCall(data || {});
         break;
 
       case "error":
-        statusBar.setStatus("Error", "error");
+        statusBar.setStatus("error", "error");
         chatView.appendTurnError(data.message || "未知错误");
         break;
 
       case "done":
         App.state.isBusy = false;
         inputBar.setBusy(false);
-        statusBar.setStatus("Ready", "ready");
+        if (document.getElementById("status-text")?.textContent !== "error") {
+          statusBar.setStatus("idle", "ready");
+        }
         chatView.finishTurn();
         break;
     }
@@ -154,6 +157,7 @@ window.App = window.App || {};
       App.components.statusBar.updateMeta({
         cwd: status.cwd,
         model: status.model,
+        tools: status.tools,
       });
       App.components.settingsModal.populate(status);
 
